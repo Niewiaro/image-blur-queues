@@ -189,6 +189,18 @@ You can test the priority queue behavior by:
 2. Submitting a premium user request while free requests are processing
 3. Observing that the premium request is processed before remaining free requests
 
+## Security Considerations
+
+This is a proof-of-concept application. For production use, consider:
+
+- **Disable Debug Mode**: Set `FLASK_DEBUG=False` in production (already configured)
+- **Use HTTPS**: Deploy behind a reverse proxy with SSL/TLS
+- **Add Authentication**: Implement API key or OAuth authentication
+- **Rate Limiting**: Add rate limiting to prevent abuse
+- **Input Validation**: Add additional validation for uploaded images
+- **Secret Management**: Use environment variables or secret management service
+- **Network Security**: Restrict RabbitMQ access to trusted networks only
+
 ## RabbitMQ Management UI
 
 Access the RabbitMQ management interface at:
