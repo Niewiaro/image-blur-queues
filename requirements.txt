@@ -1,0 +1,5 @@
+Flask==3.0.0
+Celery==5.3.4
+Pillow==10.3.0
+redis==5.0.1
+kombu==5.3.4
