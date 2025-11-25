@@ -1,0 +1,5 @@
+Flask
+Celery
+Pillow
+requests
+amqp

@@ -1,0 +1,47 @@
+services:
+  # Broker wiadomości
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672" # Port komunikacyjny
+      - "15672:15672" # Panel zarządzania (login/pass: guest/guest)
+    networks:
+      - flask-network
+
+  # Aplikacja Flask
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672/
+      - FLASK_APP=flaskr
+      - FLASK_DEBUG=1
+    depends_on:
+      - rabbitmq
+    networks:
+      - flask-network
+
+  # Worker Celery
+  worker:
+    build: .
+    # Kluczowa komenda:
+    # -A flaskr.celery_worker.celery_app : ścieżka do instancji aplikacji celery (stworzymy to za chwilę)
+    # -Q high_priority,low_priority : kolejność ma znaczenie!
+    # --concurrency=1 : jeden wątek, żeby łatwiej zapchać kolejkę (wait effect)
+    command: celery -A flaskr.celery_worker.celery_app worker --loglevel=info -Q high_priority,low_priority --concurrency=1
+    volumes:
+      - .:/app
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+      - web
+    networks:
+      - flask-network
+
+networks:
+  flask-network:
+    driver: bridge

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>
+    {% block title %}
+      Upload Image
+    {% endblock %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div style="max-width: 600px; margin: 0 auto;">
+    {% if g.user %}
+      <p style="color: green; font-weight: bold;">Jesteś zalogowany. Twoje zadania mają PRIORYTET.</p>
+    {% else %}
+      <p style="color: red;">Nie jesteś zalogowany. Twoje zadania trafią do zwykłej kolejki.</p>
+    {% endif %}
+
+    <form id="upload-form">
+      <label for="file">Wybierz zdjęcie:</label>
+      <input type="file" name="file" id="file" required />
+      <button type="submit">Prześlij i Zbluruj</button>
+    </form>
+
+    <div id="status-area" style="margin-top: 20px; display: none;">
+      <h3>Status zadania:</h3>
+      <p>
+        ID Zadania: <span id="task-id"></span>
+      </p>
+      <p>
+        Kolejka: <span id="queue-name" style="font-weight: bold;"></span>
+      </p>
+      <p>
+        Status: <span id="task-status">Czekanie...</span>
+      </p>
+      <div id="loader">Przetwarzanie (to potrwa 10 sekund)...</div>
+      <img id="result-image" src="" style="max-width: 100%; display: none; margin-top: 10px; border: 2px solid #333;" />
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('upload-form').onsubmit = async (e) => {
+      e.preventDefault()
+      const formData = new FormData(e.target)
+      const statusArea = document.getElementById('status-area')
+    
+      statusArea.style.display = 'block'
+      document.getElementById('task-status').innerText = 'Wysyłanie...'
+      document.getElementById('result-image').style.display = 'none'
+    
+      // 1. Wysyłka pliku
+      const response = await fetch("{{ url_for('image.upload_file') }}", {
+        method: 'POST',
+        body: formData
+      })
+      const data = await response.json()
+    
+      document.getElementById('task-id').innerText = data.task_id
+      document.getElementById('queue-name').innerText = data.queue
+    
+      // 2. Polling (pytanie o status co 1s)
+      checkStatus(data.task_id)
+    }
+    
+    async function checkStatus(taskId) {
+      const response = await fetch(`/image/status/${taskId}`)
+      const data = await response.json()
+    
+      document.getElementById('task-status').innerText = data.status
+    
+      if (data.status === 'SUCCESS') {
+        document.getElementById('loader').innerText = 'Gotowe!'
+        const img = document.getElementById('result-image')
+        img.src = data.image_url
+        img.style.display = 'block'
+      } else if (data.status === 'FAILURE') {
+        document.getElementById('loader').innerText = 'Błąd: ' + data.error
+      } else {
+        // Jeśli nadal PENDING lub STARTED, pytaj dalej
+        setTimeout(() => checkStatus(taskId), 1000)
+      }
+    }
+  </script>
+{% endblock %}
