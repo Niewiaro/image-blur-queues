@@ -1,6 +1,8 @@
 import os
-
 from flask import Flask
+from datetime import datetime, timezone
+
+START_TIME = datetime.now(timezone.utc)
 
 
 def create_app(test_config=None):
@@ -10,6 +12,7 @@ def create_app(test_config=None):
         SECRET_KEY="dev",
         DATABASE=os.path.join(app.instance_path, "flaskr.sqlite"),
     )
+    app.config["START_TIME"] = START_TIME
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -28,5 +31,22 @@ def create_app(test_config=None):
     @app.route("/hello")
     def hello():
         return "Hello, World!"
+
+    from . import db
+
+    db.init_app(app)
+
+    from . import health
+
+    app.register_blueprint(health.bp)
+
+    from . import auth
+
+    app.register_blueprint(auth.bp)
+
+    from . import review
+
+    app.register_blueprint(review.bp)
+    app.add_url_rule("/", endpoint="index")
 
     return app
