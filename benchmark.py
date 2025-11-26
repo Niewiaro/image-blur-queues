@@ -119,7 +119,7 @@ def send_request_and_wait(session, name):
                 break
 
             # Czekamy 1s przed kolejnym sprawdzeniem
-            time.sleep(4)
+            time.sleep(1)
 
     except Exception as e:
         print(f"❌ [{name}] Wyjątek: {e}")
