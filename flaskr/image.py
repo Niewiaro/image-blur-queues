@@ -2,20 +2,16 @@ import os
 import uuid
 from flask import (
     Blueprint,
-    flash,
     g,
-    redirect,
-    render_template,
     request,
     url_for,
     current_app,
     jsonify,
     send_from_directory,
+    render_template,
 )
-from werkzeug.utils import secure_filename
-from celery.result import AsyncResult
-from flaskr.auth import login_required
-from flaskr.tasks import process_image  # Importujemy nasze zadanie
+
+from flaskr.tasks import process_image
 
 bp = Blueprint("image", __name__, url_prefix="/image")
 
@@ -42,28 +38,21 @@ def upload_file():
         return jsonify({"error": "No selected file"}), 400
 
     if file and allowed_file(file.filename):
-        # 1. Zapisujemy plik oryginalny na dysku (współdzielony wolumen)
-        # Używamy UUID, żeby uniknąć konfliktów nazw
         ext = file.filename.rsplit(".", 1)[1].lower()
         unique_filename = f"{uuid.uuid4().hex}.{ext}"
         upload_folder = os.path.join(current_app.instance_path, "uploads")
 
-        # Upewniamy się, że folder istnieje
         os.makedirs(upload_folder, exist_ok=True)
         file.save(os.path.join(upload_folder, unique_filename))
 
-        # 2. LOGIKA KOLEJEK - KLUCZOWY MOMENT
+        # LOGIKA PRIORYTETÓW
         if g.user:
-            # Użytkownik zalogowany -> PRIORYTET
             queue_name = "high_priority"
             print(f"--> [FLASK] Użytkownik {g.user['username']} (VIP) -> High Priority")
         else:
-            # Użytkownik niezalogowany -> ZWYKŁA KOLEJKA
             queue_name = "low_priority"
             print("--> [FLASK] Użytkownik anonimowy -> Low Priority")
 
-        # 3. Wysłanie zadania do Celery
-        # apply_async pozwala nam wybrać konkretną kolejkę (queue)
         task = process_image.apply_async(
             args=[unique_filename, current_app.instance_path], queue=queue_name
         )
@@ -80,20 +69,19 @@ def upload_file():
 
 @bp.route("/status/<task_id>")
 def task_status(task_id):
-    # Pobieramy status zadania z Celery
-    task_result = AsyncResult(task_id)
+    celery_app = current_app.extensions["celery"]  # Pobieramy obiekt z __init__.py
+    task_result = celery_app.AsyncResult(task_id)  # Używamy go do sprawdzenia statusu
 
-    response = {
-        "task_id": task_id,
-        "status": task_result.status,
-    }
+    print(f"[STATUS] Sprawdzam ID={task_id}, Status={task_result.status}")
+
+    response = {"task_id": task_id, "status": task_result.status}
 
     if task_result.status == "SUCCESS":
         response["result"] = task_result.result
-        # Dodajemy URL do pobrania gotowego obrazka
-        response["image_url"] = url_for(
-            "image.get_image", filename=task_result.result["filename"]
-        )
+        # Pobieramy nazwę pliku z wyniku workera
+        filename = task_result.result.get("filename")
+        if filename:
+            response["image_url"] = url_for("image.get_image", filename=filename)
     elif task_result.status == "FAILURE":
         response["error"] = str(task_result.result)
 
@@ -102,7 +90,6 @@ def task_status(task_id):
 
 @bp.route("/result/<filename>")
 def get_image(filename):
-    # Serwujemy przetworzony plik
     return send_from_directory(
         os.path.join(current_app.instance_path, "processed"), filename
     )

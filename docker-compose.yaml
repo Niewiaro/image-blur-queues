@@ -15,6 +15,7 @@ services:
       - "5000:5000"
     volumes:
       - .:/app
+      - celery_data:/shared
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672/
       - FLASK_APP=flaskr
@@ -31,9 +32,10 @@ services:
     # -A flaskr.celery_worker.celery_app : ścieżka do instancji aplikacji celery (stworzymy to za chwilę)
     # -Q high_priority,low_priority : kolejność ma znaczenie!
     # --concurrency=1 : jeden wątek, żeby łatwiej zapchać kolejkę (wait effect)
-    command: celery -A flaskr.celery_worker.celery_app worker --loglevel=info -Q high_priority,low_priority --concurrency=1
+    command: celery -A flaskr.celery_worker.celery_app worker --loglevel=info -Q high_priority,low_priority --concurrency=1 -O fair
     volumes:
       - .:/app
+      - celery_data:/shared
     environment:
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672/
     depends_on:
@@ -45,3 +47,6 @@ services:
 networks:
   flask-network:
     driver: bridge
+
+volumes:
+  celery_data:

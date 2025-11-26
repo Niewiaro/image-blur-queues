@@ -20,8 +20,25 @@ def celery_init_app(app: Flask) -> Celery:
 
 
 def create_app(test_config=None):
-    # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
+
+    # --- KONFIGURACJA ŚCIEŻEK DLA DOCKERA ---
+    # Używamy ścieżki /shared, którą zdefiniowaliśmy w docker-compose.yaml
+    SHARED_FOLDER = "/shared"
+    RESULTS_FOLDER = os.path.join(SHARED_FOLDER, "results")
+
+    # Tworzenie folderów (bezpiecznie)
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+        os.makedirs(os.path.join(app.instance_path, "uploads"), exist_ok=True)
+        os.makedirs(os.path.join(app.instance_path, "processed"), exist_ok=True)
+
+        # Folder na wyniki Celery
+        os.makedirs(RESULTS_FOLDER, exist_ok=True)
+        os.chmod(RESULTS_FOLDER, 0o777)  # Pełne uprawnienia dla workera i flaska
+    except OSError:
+        pass
+
     app.config.from_mapping(
         SECRET_KEY="dev",
         DATABASE=os.path.join(app.instance_path, "flaskr.sqlite"),
@@ -29,8 +46,12 @@ def create_app(test_config=None):
             broker_url=os.environ.get(
                 "CELERY_BROKER_URL", "amqp://guest:guest@localhost:5672/"
             ),
-            result_backend="rpc://",
-            task_ignore_result=True,
+            # --- KLUCZOWA ZMIANA: BACKEND PLIKOWY ---
+            result_backend=f"file://{RESULTS_FOLDER}",
+            task_ignore_result=False,
+            task_acks_late=True,
+            worker_prefetch_multiplier=1,
+            worker_concurrency=1,
         ),
         START_TIME=START_TIME,
     )
@@ -41,14 +62,6 @@ def create_app(test_config=None):
     else:
         # load the test config if passed in
         app.config.from_mapping(test_config)
-
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-        os.makedirs(os.path.join(app.instance_path, "uploads"), exist_ok=True)
-        os.makedirs(os.path.join(app.instance_path, "processed"), exist_ok=True)
-    except OSError:
-        pass
 
     celery_init_app(app)
 
@@ -72,10 +85,11 @@ def create_app(test_config=None):
     from . import review
 
     app.register_blueprint(review.bp)
-    app.add_url_rule("/", endpoint="index")
 
     from . import image
 
     app.register_blueprint(image.bp)
+
+    app.add_url_rule("/", endpoint="index")
 
     return app
