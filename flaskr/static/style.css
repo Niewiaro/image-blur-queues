@@ -1,26 +1,72 @@
-html { font-family: sans-serif; background: #2e2e2e; padding: 1rem; }
-body { max-width: 960px; margin: 0 auto; background: white; }
-h1 { font-family: serif; color: #377ba8; margin: 1rem 0; }
-a { color: #377ba8; }
-hr { border: none; border-top: 1px solid lightgray; }
-nav { background: lightgray; display: flex; align-items: center; padding: 0 0.5rem; }
-nav h1 { flex: auto; margin: 0; }
-nav h1 a { text-decoration: none; padding: 0.25rem 0.5rem; }
-nav ul  { display: flex; list-style: none; margin: 0; padding: 0; }
-nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
-.content { padding: 0 1rem 1rem; }
-.content > header { border-bottom: 1px solid lightgray; display: flex; align-items: flex-end; }
-.content > header h1 { flex: auto; margin: 1rem 0 0.25rem 0; }
-.flash { margin: 1em 0; padding: 1em; background: #cae6f6; border: 1px solid #377ba8; }
-.post > header { display: flex; align-items: flex-end; font-size: 0.85em; }
-.post > header > div:first-of-type { flex: auto; }
-.post > header h1 { font-size: 1.5em; margin-bottom: 0; }
-.post .about { color: slategray; font-style: italic; }
-.post .body { white-space: pre-line; }
-.content:last-child { margin-bottom: 0; }
-.content form { margin: 1em 0; display: flex; flex-direction: column; }
-.content label { font-weight: bold; margin-bottom: 0.5em; }
-.content input, .content textarea { margin-bottom: 1em; }
-.content textarea { min-height: 12em; resize: vertical; }
-input.danger { color: #cc2f2e; }
-input[type=submit] { align-self: start; min-width: 10em; }
+/* Tło strony */
+body {
+    background: linear-gradient(135deg, #1a1d20 0%, #212529 100%);
+    min-height: 100vh;
+    color: #e9ecef;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* --- HERO SECTION (Nagłówek promujący Blur) --- */
+.hero-section {
+    background: rgba(43, 48, 53, 0.7);
+    /* Półprzezroczyste tło */
+    backdrop-filter: blur(10px);
+    /* Efekt szkła */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.hero-section:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--bs-primary-rgb), 0.5);
+}
+
+/* --- KARTY RECENZJI --- */
+.review-card {
+    background-color: #2b3035;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    /* transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1); */
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+    /* WAŻNE: Brak height: 100% - karta dopasuje się do treści */
+}
+
+/* Efekt Hover - Subtelny i elegancki */
+.review-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    background-color: #30353a;
+    /* Lekkie rozjaśnienie tła */
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Niebieski akcent po lewej stronie przy hoverze */
+.review-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--bs-primary);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.review-card:hover::before {
+    opacity: 1;
+}
+
+/* Obrazki wynikowe */
+#result-image {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+textarea {
+    min-height: 120px;
+}

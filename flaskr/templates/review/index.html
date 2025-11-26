@@ -1,32 +1,67 @@
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>
-    {% block title %}
-      Reviews
-    {% endblock %}
-  </h1>
-  {% if g.user %}
-    <a class="action" href="{{ url_for('review.create') }}">New</a>
-  {% endif %}
+{% block title %}
+  Home
 {% endblock %}
 
+{% block header %}
+{% endblock %}
 {% block content %}
-  {% for post in posts %}
-    <article class="post">
-      <header>
-        <div>
-          <h1>{{ post.title }}</h1>
-          <div class="about">by {{ post.username }} on {{ post.created.strftime('%Y-%m-%d') }}</div>
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <div class="p-5 mb-5 hero-section text-center">
+        <div class="container-fluid py-2">
+          <h1 class="display-5 fw-bold text-white mb-3"><i class="bi bi-camera-fill text-primary"></i> Secure Image Blur</h1>
+          <p class="col-md-10 mx-auto fs-5 text-secondary mb-4">
+            Protect privacy instantly. Upload photos and let our <span class="text-info">RabbitMQ & Celery</span> cluster handle the heavy processing in the background.
+          </p>
+          <div class="d-flex justify-content-center gap-3">
+            <a class="btn btn-primary btn-lg px-4 fw-bold" href="{{ url_for('image.index') }}"><i class="bi bi-rocket-takeoff"></i> Try Blur Tool</a>
+            {% if not g.user %}
+              <a class="btn btn-outline-light btn-lg px-4" href="{{ url_for('auth.register') }}">Create Account (VIP)</a>
+            {% endif %}
+          </div>
         </div>
-        {% if g.user.id == post.author_id %}
-          <a class="action" href="{{ url_for('review.update', id=post.id) }}">Edit</a>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-secondary pb-2">
+        <h3 class="h4 text-white mb-0"><i class="bi bi-chat-left-quote-fill me-2"></i>Community Reviews</h3>
+        {% if g.user %}
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('review.create') }}"><i class="bi bi-plus-lg"></i> Write Review</a>
         {% endif %}
-      </header>
-      <p class="body">{{ post.body }}</p>
-    </article>
-    {% if not loop.last %}
-      <hr />
-    {% endif %}
-  {% endfor %}
+      </div>
+
+      {% if not posts %}
+        <div class="text-center py-5">
+          <div class="display-1 text-secondary opacity-25">
+            <i class="bi bi-chat-square-dots"></i>
+          </div>
+          <p class="lead text-muted mt-3">No reviews yet.</p>
+        </div>
+      {% endif %}
+
+      {% for post in posts %}
+        <div class="card mb-3 review-card">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="card-title text-white fw-bold mb-1">{{ post.title }}</h5>
+                <div class="text-secondary small">
+                  <i class="bi bi-person-fill"></i> {{ post.username }}
+                  <span class="mx-1">&bull;</span>
+                  {{ post.created.strftime('%Y-%m-%d') }}
+                </div>
+              </div>
+
+              {% if g.user.id == post.author_id %}
+                <a class="btn btn-sm btn-dark text-secondary" href="{{ url_for('review.update', id=post.id) }}"><i class="bi bi-pencil-fill"></i></a>
+              {% endif %}
+            </div>
+
+            <p class="card-text text-light opacity-75 mt-3 mb-1" style="white-space: pre-line; font-size: 0.95rem;">{{ post.body }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
 {% endblock %}

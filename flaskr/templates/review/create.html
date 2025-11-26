@@ -1,19 +1,37 @@
 {% extends 'base.html' %}
 
+{% block title %}
+  New Review
+{% endblock %}
+
 {% block header %}
-  <h1>
-    {% block title %}
-      New Review
-    {% endblock %}
-  </h1>
+  <i class="bi bi-pencil-square"></i> Create New Review
 {% endblock %}
 
 {% block content %}
-  <form method="post">
-    <label for="title">Title</label>
-    <input name="title" id="title" value="{{ request.form.title }}" required />
-    <label for="body">Body</label>
-    <textarea name="body" id="body">{{ request.form.body }}</textarea>
-    <input type="submit" value="Save" />
-  </form>
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm border-secondary">
+        <div class="card-body p-4">
+          <form method="post">
+            <div class="mb-3">
+              <label for="title" class="form-label">Title</label>
+              <input name="title" id="title" class="form-control form-control-lg" value="{{ request.form.title }}" required autofocus placeholder="Enter review title..." />
+            </div>
+
+            <div class="mb-4">
+              <label for="body" class="form-label">Body</label>
+              <textarea name="body" id="body" class="form-control" rows="8" placeholder="What's on your mind?">{{ request.form.body }}</textarea>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{{ url_for('index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Cancel</a>
+
+              <button type="submit" class="btn btn-primary px-4 btn-lg"><i class="bi bi-send-fill"></i> Publish</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
